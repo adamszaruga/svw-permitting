@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Home, Users, PlusCircle, FileText, Briefcase, Box } from 'react-feather';
-import { Nav, NavLink, Link, Switch, Route } from 'react-router-dom';
+import { Switch, Route } from 'react-router-dom';
 import './App.css';
 
 import Header from './Components/Header';

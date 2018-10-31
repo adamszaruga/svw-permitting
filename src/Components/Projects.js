@@ -1,152 +1,109 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { compose } from 'redux';
+import { connect } from 'react-redux'
+import { withRouter, NavLink, Route } from 'react-router-dom';
+import { Users, Briefcase, Map } from 'react-feather';
+import {  withHandlers } from 'recompose';
+import { firestoreConnect, isLoaded, isEmpty } from 'react-redux-firebase'
+import Project from './Project';
 
-class Projects extends Component {
-    render() {
-        return (
-            <div>
-                <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 className="h2">Projects</h1>
-                    <div className="btn-toolbar mb-2 mb-md-0">
-                        <div className="btn-group mr-2">
-                            <button className="btn btn-sm btn-outline-secondary">Share</button>
-                            <button className="btn btn-sm btn-outline-secondary">Export</button>
-                        </div>
-                        <button className="btn btn-sm btn-outline-secondary dropdown-toggle">
-                            <span data-feather="calendar"></span>
-                            This week
-                        </button>
-                    </div>
+const NEW_PROJECT_NAME = 'New Project';
+
+const enhance = compose(
+    firestoreConnect([
+        { collection: 'projects', orderBy: ['createdAt'] }
+    ]),
+    connect(
+        ({ firestore }) => ({
+            projects: firestore.ordered.projects,
+        })
+    ),
+    withRouter,
+    withHandlers({
+        addProject: props => () =>
+            props.firestore.add('projects', { 
+                name: NEW_PROJECT_NAME, 
+                street: '',
+                city: '',
+                state: '',
+                zip: '',
+                scope: '',
+                cost: 0,
+                createdAt: props.firestore.FieldValue.serverTimestamp()
+            }),
+        updateProject: props => (project, updates) => {
+            delete updates.id;
+            return props.firestore.update({ collection: 'projects', doc: project.id }, updates)
+        },
+        deleteProject: props => (project) => {
+            props.history.push('/projects');
+            return props.firestore.update({ collection: 'projects', doc: project.id }, {isArchived: true});
+        }
+    })
+)
+
+const Projects = ({match, projects, addProject, deleteProject, updateProject}) => (
+    <div>
+        <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 className="h2">Projects</h1>
+            <div className="btn-toolbar mb-2 mb-md-0">
+                <div className="btn-group mr-2">
+                    <button className="btn btn-sm btn-outline-secondary" onClick={addProject}>Add Project</button>
+                    <button className="btn btn-sm btn-outline-secondary">Import</button>
                 </div>
-                <div className="table-responsive">
-                    <table className="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1,001</td>
-                                <td>Lorem</td>
-                                <td>ipsum</td>
-                                <td>dolor</td>
-                                <td>sit</td>
-                            </tr>
-                            <tr>
-                                <td>1,002</td>
-                                <td>amet</td>
-                                <td>consectetur</td>
-                                <td>adipiscing</td>
-                                <td>elit</td>
-                            </tr>
-                            <tr>
-                                <td>1,003</td>
-                                <td>Integer</td>
-                                <td>nec</td>
-                                <td>odio</td>
-                                <td>Praesent</td>
-                            </tr>
-                            <tr>
-                                <td>1,003</td>
-                                <td>libero</td>
-                                <td>Sed</td>
-                                <td>cursus</td>
-                                <td>ante</td>
-                            </tr>
-                            <tr>
-                                <td>1,004</td>
-                                <td>dapibus</td>
-                                <td>diam</td>
-                                <td>Sed</td>
-                                <td>nisi</td>
-                            </tr>
-                            <tr>
-                                <td>1,005</td>
-                                <td>Nulla</td>
-                                <td>quis</td>
-                                <td>sem</td>
-                                <td>at</td>
-                            </tr>
-                            <tr>
-                                <td>1,006</td>
-                                <td>nibh</td>
-                                <td>elementum</td>
-                                <td>imperdiet</td>
-                                <td>Duis</td>
-                            </tr>
-                            <tr>
-                                <td>1,007</td>
-                                <td>sagittis</td>
-                                <td>ipsum</td>
-                                <td>Praesent</td>
-                                <td>mauris</td>
-                            </tr>
-                            <tr>
-                                <td>1,008</td>
-                                <td>Fusce</td>
-                                <td>nec</td>
-                                <td>tellus</td>
-                                <td>sed</td>
-                            </tr>
-                            <tr>
-                                <td>1,009</td>
-                                <td>augue</td>
-                                <td>semper</td>
-                                <td>porta</td>
-                                <td>Mauris</td>
-                            </tr>
-                            <tr>
-                                <td>1,010</td>
-                                <td>massa</td>
-                                <td>Vestibulum</td>
-                                <td>lacinia</td>
-                                <td>arcu</td>
-                            </tr>
-                            <tr>
-                                <td>1,011</td>
-                                <td>eget</td>
-                                <td>nulla</td>
-                                <td>className</td>
-                                <td>aptent</td>
-                            </tr>
-                            <tr>
-                                <td>1,012</td>
-                                <td>taciti</td>
-                                <td>sociosqu</td>
-                                <td>ad</td>
-                                <td>litora</td>
-                            </tr>
-                            <tr>
-                                <td>1,013</td>
-                                <td>torquent</td>
-                                <td>per</td>
-                                <td>conubia</td>
-                                <td>nostra</td>
-                            </tr>
-                            <tr>
-                                <td>1,014</td>
-                                <td>per</td>
-                                <td>inceptos</td>
-                                <td>himenaeos</td>
-                                <td>Curabitur</td>
-                            </tr>
-                            <tr>
-                                <td>1,015</td>
-                                <td>sodales</td>
-                                <td>ligula</td>
-                                <td>in</td>
-                                <td>libero</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <button className="btn btn-sm btn-outline-secondary dropdown-toggle">
+                    <span data-feather="calendar"></span>
+                    This week
+                </button>
             </div>
-        );
-    }
-}
+        </div>
+        <div className="d-flex data-table">
+            <div className="list-group list-group-flush w-100">
+                <div className="list-group-item text-light" style={{backgroundColor: "#4C5256"}}>
+                    <b>Project Name</b>
+                </div>
+                {
+                    !isLoaded(projects)
+                        ? (<div className="lds-default mx-auto my-5"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>)
+                        : isEmpty(projects)
+                            ? 'No projects to show'
+                            : projects.map((project) => (
+                                <NavLink exact to={`${match.path}/${project.id}`} className="list-group-item list-group-item-action flex-column align-items-start" key={project.id}>
+                                    <div className="d-flex w-100 justify-content-between align-items-baseline">
+                                        <h5>{project.name}</h5>
+                                        <span className="badge badge-warning">In Review</span>
+                                    </div>
+                                    <div className="row no-gutters justify-content-start align-items-start">
+                                        <span className="col-4 mr-5"><Map className="feather mr-2" />{project.street}</span>
+                                        <span className="col-4 mr-5"><Users className="feather mr-2" />Adam Szaruga</span>
+                                        
+                                    </div>
+                                    <div className="row no-gutters justify-content-start align-items-start">
+                                        <span className="col-4 mr-5"><Briefcase className="feather mr-2" />USAA</span>
+                                        <span className="col-4 mr-5"><Map className="feather mr-2" />{project.street}</span>
+                                    </div>
+                                    
+                                </NavLink>
+                            ))
+                }
+            </div>
+            
+            {
+                !isLoaded(projects)
+                    ? ''
+                    : <Route exact path={`${match.path}/:id`} render={({ match }) => {
+                        let project = projects.find(project => project.id === match.params.id);
+                        return <Project key={project ? project.id : 'noprojectfound'} 
+                                        project={project} 
+                                        deleteProject={deleteProject} 
+                                        updateProject={updateProject}
+                                        editMode={project ? (project.name === NEW_PROJECT_NAME ? true : false) : false}/>
+                    }} />
+            }
+            
 
-export default Projects;
+        </div>
+    </div>
+)
+
+export default enhance(Projects)
