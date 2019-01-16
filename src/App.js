@@ -7,9 +7,10 @@ import Sidebar from './Components/Sidebar';
 import Dashboard from './Components/Dashboard';
 import Projects from './Components/Projects';
 import Applicants from './Components/Applicants';
-import Owners from './Components/Owners';
+import Firms from './Components/Firms';
 import Documents from './Components/Documents';
-
+import Submittals from './Components/Submittals/Submittals';
+import SubmittalsContainer from './Components/SubmittalsContainer';
 class App extends Component {
   render() {
     return (
@@ -19,13 +20,18 @@ class App extends Component {
           <div className="row">
             <Sidebar />
 
-            <main role="main" className="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <main role="main" className="col-md-10 ml-sm-auto col-lg-10 px-4" style={{paddingTop: '400px'}}>
               <Switch>
                 <Route exact path="/" render={()=><Dashboard />} /> 
                 <Route path="/projects" render={() => <Projects />} /> 
                 <Route path="/applicants" render={() => <Applicants />} /> 
-                <Route path="/owners" render={() => <Owners />} /> 
+                <Route path="/firms" render={() => <Firms />} /> 
                 <Route path="/documents" render={() => <Documents />} /> 
+                <Route path="/submittals/:id" render={({match: {params}}) => {
+                  let { id } = params;
+                  return (<SubmittalsContainer projectId={id}/>)
+                }} /> 
+                <Route exact path="/submittals" render={() => <Submittals /> } /> 
               </Switch>
             </main>
           </div>

@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
-import { Box, Trash2, Edit2 } from 'react-feather';
+import React from 'react';
+import moment from 'moment';
+import { Box, Trash2, Edit2, Bookmark } from 'react-feather';
 import { compose, withHandlers, withState } from 'recompose';
+import { Link } from 'react-router-dom';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
+import { connect } from 'react-redux';
 import ActionModal from './ActionModal';
 
 let DELETE_MODAL_ID = "deleteModal";
-let state = {
-    editMode: false
-}
 
 const Project = ({
     project, 
@@ -20,9 +20,16 @@ const Project = ({
     onChange,
     isSubmitting,
     setFormData,
-    formData
+    formData,
+    note,
+    setNote,
+    saveNote,
+    lastNote,
+    bookmarks,
+    toggleBookmark,
+    createSubmittal
 })=> (
-    <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "500px" }}>
+    <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "620px" }}>
         <div className="position-fixed w-100 m-2">
             <div className="pl-3 py-1 w-30"> 
                     <form onSubmit={onSubmit} className="pt-3">
@@ -31,6 +38,7 @@ const Project = ({
                         {editMode ? (
                             <div className="form-group ">
                                 <input
+                                    required
                                     readOnly={!editMode}
                                     value={formData.name}
                                     type="text"
@@ -42,13 +50,15 @@ const Project = ({
                                 {errors.street ? <div class="invalid-feedback">{errors.street}</div> : null}
                             </div>
                         ) : formData.name}
-                        <a href="#" onClick={()=>setEditMode(true)}className="text-secondary ml-auto mr-2"  ><Edit2 className="feather" /></a>
+                        <a href="#" onClick={(e)=>{e.preventDefault();toggleBookmark(project)}} className={`ml-auto mr-2 ${bookmarks.find(({id})=>id===project.id) ? 'text-bookmark' : 'text-secondary'}`}  ><Bookmark className="feather" /></a>
+                        <a href="#" onClick={()=>setEditMode(true)}className="text-secondary  mr-2"  ><Edit2 className="feather" /></a>
                         <a href="#" className="text-secondary" data-toggle="modal" data-target={"#"+DELETE_MODAL_ID}><Trash2 className="feather " /></a>
                     </div>
                 
                     <div className="form-group">
                         <label htmlFor="street">Street Address</label>
-                        <input 
+                        <input
+                            required 
                             readOnly={!editMode} 
                             value={formData.street} 
                             type="text" 
@@ -63,6 +73,7 @@ const Project = ({
                         <div className="form-group col-6">
                             <label htmlFor="city">City</label>
                             <input 
+                                required
                                 readOnly={!editMode} 
                                 value={formData.city} 
                                 type="text" 
@@ -75,19 +86,21 @@ const Project = ({
                         <div className="form-group col-md-3">
                             <label htmlFor="state">State</label>
                             <select 
+                                required
                                 readOnly={!editMode} 
                                 name="state" 
                                 id="state" 
                                 className="form-control"
                                 onChange={onChange}>
-                                <option defaultValue>Choose...</option>
-                                <option>...</option>
+                                <option value="GA" defaultValue>GA</option>
+        
                             </select>
                             {errors.state ? <div class="invalid-feedback">{errors.state}</div> : null} 
                         </div>
                         <div className="form-group col-md-3">
                             <label htmlFor="zip">Zip</label>
                             <input 
+                                required
                                 readOnly={!editMode} 
                                 value={formData.zip} 
                                 type="text" 
@@ -99,33 +112,52 @@ const Project = ({
                         </div>
                     </div>
                     <div className="form-group">
-                        <label htmlFor="cost">Cost of construction</label>
-                        <input 
-                            readOnly={!editMode} 
-                            value={formData.cost} 
-                            type="number" 
-                            className="form-control" 
-                            id="cost" 
-                            name="cost" 
-                            placeholder="Cost of Construction" 
-                            onChange={onChange}/>
-                        {errors.cost ? <div class="invalid-feedback">{errors.cost}</div> : null} 
+                        <label htmlFor="status">Status</label>
+                        <select
+                            required
+                            disabled={!editMode}
+                            value={formData.status || "new"}
+                            className="form-control"
+                            name="status"
+                            id="status"
+                            onChange={onChange}>
+                            <option value="review">In Review</option>
+                            <option value="comments">Comments Issued</option>
+                            <option value="approved">Approved</option>
+                            <option value="denied">Denied</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="new">New Project</option>
+                        </select>
+                        {errors.status ? <div className="invalid-feedback">{errors.status}</div> : null}
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="scope">Scope of Work</label>
-                        <textarea 
-                            readOnly={!editMode} 
-                            value={formData.scope} 
-                            className="form-control" 
-                            id="scope" 
-                            name="scope" 
-                            rows="3"
-                            onChange={onChange}></textarea>
-                        {errors.scope ? <div class="invalid-feedback">{errors.scope}</div> : null} 
-                    </div>
+                    {!editMode ? (
+                        <form onSubmit={saveNote}>
+                            <div className="form-group">
+                                <label htmlFor="note">Add Note</label>
+                                <div className="input-group mb-3">
+                                        <input value={note} name="note" onChange={(e)=>setNote(e.currentTarget.value)} type="text" className="form-control" />
+                                    <div className="input-group-append">
+                                        <button className="btn btn-outline-primary" type="submit">Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="latest-note">Last Note</label>
+                                <textarea disabled value={lastNote()} name="latest-note" onChange={(e) => setNote(e.currentTarget.value)} type="text" className="form-control" />      
+                            </div>
+                        </form>
+                    ) : null}
+                    {!editMode ? (
+                        <form onSubmit={(e) => {e.preventDefault();e.stopPropagation();}}>
+                            <div className="form-group">
+                                <label htmlFor="latest-note">Submittal</label>
+                                <Link to={`/submittals/${project.id}`} className="btn btn-outline-primary w-100">Generate Submittal Packet</Link>
+                            </div>
+                        </form>
+                    ) : null}
                     {editMode ? (
                         <div className="form-group">
-                            <button type="submit" className="btn btn-primary mr-2">Save Changes</button>
+                            <button type="submit" className="btn btn-primary mr-2">{isSubmitting ? "Saving..." : "Save Changes"}</button>
                             <button type="button" onClick={()=>{
                                 setFormData(project);
                                 setEditMode(false);
@@ -136,6 +168,7 @@ const Project = ({
                         {error ? <div className="invalid-feedback">{error}</div> : null }
                     </div>
                 </form>
+                
             </div>
 
         </div>
@@ -147,23 +180,20 @@ const Project = ({
                 actionText="Delete" />
     </div>
 )
-    
-const initialFormState = {
-    name: 'name',
-    street: 'street',
-    city: 'city',
-    state: 'state',
-    zip: 'zip',
-    cost: 0,
-    scope: 'scope'
-};
 
 export default compose(
     withFormData('project'),
     withIsSubmitting,
     withError,
     withValidationErrors,
+    connect(
+        ({ bookmarks }) => ({ bookmarks }),
+        (dispatch) => ({
+            toggleBookmark: (project) => dispatch({type: "TOGGLE_BOOKMARK", project})
+        })
+    ),
     withState('editMode', 'setEditMode', ({editMode})=>editMode),
+    withState('note', 'setNote', '' ),
     withHandlers({
         onSubmit: ({
             formData,
@@ -182,15 +212,71 @@ export default compose(
                 return setValidationErrors({ name: 'Name is required' });
             }
             setValidationErrors({});
-
             setIsSubmitting(true);
 
-            updateProject(project, {...formData}).then(()=>{
+            let updates = {...formData}
+
+            if (project.status !== formData.status) {
+                let milestones = project.milestones || [];
+                let now = new Date();
+                let newMilestone = {
+                    timestamp: now.toString(),
+                    status: formData.status,
+                    notes: []
+                }
+                updates.milestones = milestones.concat(newMilestone);
+            }
+
+            updateProject(project, updates).then(()=>{
                 setEditMode(false);
                 setIsSubmitting(false);
                 setError(null);
             });
             
         },
+        saveNote: ({
+            project, 
+            updateProject,
+            note,
+            setNote
+        }) => event => {
+            event.preventDefault();
+            event.stopPropagation();
+            let now = new Date();
+
+            let milestones = project.milestones || [{
+                status: 'new',
+                timestamp: now.toString(),
+                notes: []
+            }]
+
+            let newMilestones = milestones.map((milestone, index) => {
+                if (index === milestones.length-1) {
+                    return {
+                        ...milestone,
+                        notes: milestone.notes.concat({
+                            timestamp: now.toString(),
+                            text: note
+                        })
+                    }
+                }
+                return milestone;
+            })
+
+            updateProject(project, { milestones: newMilestones }).then(() => {
+                setNote('');
+            });
+        },
+        lastNote: ({project}) => () => {
+           let lastNote = 'No notes for this project';
+           if (!project.milestones) return lastNote;
+           project.milestones.forEach(milestone => {
+               if (milestone.notes && milestone.notes.length > 0) {
+                   let {timestamp, text} = milestone.notes[milestone.notes.length -1];
+                   lastNote = `${moment(timestamp).format('MMM D, h:mm a')} - ${text}`;
+               }
+           })
+           return lastNote
+        }
     })
 )(Project);

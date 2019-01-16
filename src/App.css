@@ -31,6 +31,10 @@ body {
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
 }
 
+.text-bookmark {
+  color: #007bff
+}
+
 @supports ((position: -webkit-sticky) or (position: sticky)) {
   .sidebar-sticky {
     position: -webkit-sticky;
@@ -41,6 +45,13 @@ body {
 .sidebar .nav-link {
   font-weight: 500;
   color: #333;
+}
+
+.sidebar .nav-link .close {
+  display: none;
+}
+.sidebar .nav-link:hover .close {
+  display: initial;
 }
 
 .sidebar .nav-link .feather {
@@ -107,6 +118,37 @@ body {
 
 .w-30 {
   width: 30%!important;
+}
+
+.list-group-item.active {
+  background-color: #f8f9fa;
+  border-color: rgba(0,0,0,0.325);
+  color: inherit;
+}
+
+.list-group-item .progress-section {
+  outline: none;
+  transition: all 0.3s;
+}
+
+.list-group-item.active .progress-section:hover .circle,
+.list-group-item.active .progress-section:focus .circle,
+.list-group-item.active .progress-section:hover .bar,
+.list-group-item.active .progress-section:focus .bar{
+ box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)!important;
+}
+
+
+
+.list-group-item.active .progress-section:hover .date,
+.list-group-item.active .progress-section:focus .date {
+  font-weight: bold;
+}
+
+.list-group-item.active .progress-section:hover,
+.list-group-item.active .progress-section:focus{
+  margin-top: -2px !important;
+  margin-bottom: 2px !important;
 }
 
 /* loading spinner */
