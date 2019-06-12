@@ -6,8 +6,6 @@ import { withHandlers, withState } from 'recompose';
 import { firestoreConnect } from 'react-redux-firebase'
 
 
-import Permits from './Permits';
-
 const NEW_PROJECT_NAME = 'New Project';
 const enhance = compose(
     firestoreConnect([
@@ -56,7 +54,7 @@ let Dashboard = ({
         <div className="tab-content" id="myTabContent">
             
             <div className="tab-pane fade show active" id="permits" role="tabpanel" aria-labelledby="permits-tab">
-                <Permits projects={projects} />
+        
             </div>
             <div className="tab-pane fade " id="metrics" role="tabpanel" aria-labelledby="metrics-tab">...</div>
         </div>
@@ -65,30 +63,3 @@ let Dashboard = ({
 
 export default enhance(Dashboard);
 
-
-// let mySchema = {
-//     projectId: "34234234",
-//     applicantId: "232415",
-//     ownerId: "14129402934",
-//     jurisdictionId: "12312390",
-//     formData: {
-//         // the object that got sent to the form generator
-//     },
-//     milestones: {
-//         paperworkGenerated: "TIMESTAMP",
-//         paperworkSubmitted: "TIMESTAMP",
-//         revisionCycles: [
-//             {
-//                 commentsReceived: "TIMESTAMP",
-//                 revisionsSubmitted: "TIMESTAMP"
-//             }
-//         ],
-//         permitApproved: "TIMESTAMP"
-//     },
-//     notes: {
-//         "TIMESTAMP": {
-//             author: "name",
-//             text: "this is the note"
-//         }
-//     }
-// }

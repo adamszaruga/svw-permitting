@@ -1,14 +1,19 @@
 import React from 'react';
-import { Users, Trash2, Edit2 } from 'react-feather';
+import moment from 'moment';
+import { Inbox, Trash2, Edit2, Bookmark } from 'react-feather';
 import { compose, withHandlers, withState } from 'recompose';
+import { Link } from 'react-router-dom';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
+import { connect } from 'react-redux';
 import ActionModal from './ActionModal';
+import AddFormModal from './AddFormModal';
 
 let DELETE_MODAL_ID = "deleteModal";
+let ADD_FORM_MODAL_ID = "addFormModal";
 
-const Applicant = ({
-    applicant,
-    deleteApplicant,
+const Jurisdiction = ({
+    jurisdiction,
+    deleteJurisdiction,
     editMode,
     error,
     errors,
@@ -17,14 +22,21 @@ const Applicant = ({
     onChange,
     isSubmitting,
     setFormData,
-    formData
+    formData,
+    note,
+    setNote,
+    addForm,
+    lastNote,
+    bookmarks,
+    toggleBookmark,
+    createSubmittal
 }) => (
-        <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "530px" }}>
+        <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "620px" }}>
             <div className="position-fixed w-100 m-2">
                 <div className="pl-3 py-1 w-30">
                     <form onSubmit={onSubmit} className="pt-3">
                         <div className="h2 w-100 d-flex">
-                            <Users className={"feather mr-2 text-primary align-self-center " + (editMode ? 'mb-3' : '')} />
+                            <Inbox className={"feather mr-2 text-primary align-self-center " + (editMode ? 'mb-3' : '')} />
                             {editMode ? (
                                 <div className="form-group ">
                                     <input
@@ -35,12 +47,13 @@ const Applicant = ({
                                         className="form-control"
                                         name="name"
                                         id="name"
-                                        placeholder="Applicant Name"
+                                        placeholder="Jurisdiction Name"
                                         onChange={onChange} />
                                     {errors.street ? <div class="invalid-feedback">{errors.street}</div> : null}
                                 </div>
                             ) : formData.name}
-                            <a href="#" onClick={() => setEditMode(true)} className="text-secondary ml-auto mr-2"  ><Edit2 className="feather" /></a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); toggleBookmark(jurisdiction) }} className={`ml-auto mr-2 ${bookmarks.find(({ id }) => id === jurisdiction.id) ? 'text-bookmark' : 'text-secondary'}`}  ><Bookmark className="feather" /></a>
+                            <a href="#" onClick={() => setEditMode(true)} className="text-secondary  mr-2"  ><Edit2 className="feather" /></a>
                             <a href="#" className="text-secondary" data-toggle="modal" data-target={"#" + DELETE_MODAL_ID}><Trash2 className="feather " /></a>
                         </div>
 
@@ -100,52 +113,27 @@ const Applicant = ({
                                 {errors.zip ? <div class="invalid-feedback">{errors.zip}</div> : null}
                             </div>
                         </div>
-                        <div className="form-row">
-                            <div className="form-group col-6">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    required
-                                    readOnly={!editMode}
-                                    value={formData.email}
-                                    type="text"
-                                    className="form-control"
-                                    name="email"
-                                    id="email"
-                                    onChange={onChange} />
-                                {errors.email ? <div class="invalid-feedback">{errors.email}</div> : null}
-                            </div>
-                            <div className="form-group col-md-6">
-                                <label htmlFor="phone">Phone</label>
-                                <input
-                                    required
-                                    readOnly={!editMode}
-                                    value={formData.phone}
-                                    type="text"
-                                    className="form-control"
-                                    name="phone"
-                                    id="phone"
-                                    onChange={onChange} />
-                                {errors.phone ? <div class="invalid-feedback">{errors.phone}</div> : null}
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="company">Company</label>
-                            <input
-                                required
-                                type="text"
-                                readOnly={!editMode}
-                                value={formData.company}
-                                className="form-control"
-                                id="company"
-                                name="company"
-                                onChange={onChange}/>
-                            {errors.company ? <div class="invalid-feedback">{errors.company}</div> : null}
-                        </div>
+                        {!editMode ? (
+                            <form >
+                                <div className="form-group">
+                                    <label>Forms</label>
+                                    <ul className="list-group list-group-flush">
+                                    {
+                                        jurisdiction.submittals.commercial.forms.map((form, i) => (
+                                                <li key={i} className="list-group-item">{form.formId}</li>
+                                        ))
+                                    }
+                                    </ul>
+                                </div>
+                                <button type="button" data-toggle="modal" data-target={"#" + ADD_FORM_MODAL_ID} className='btn btn-outline-secondary w-100'>Add Form</button> 
+                      
+                            </form>
+                        ) : null}
                         {editMode ? (
                             <div className="form-group">
                                 <button type="submit" className="btn btn-primary mr-2">{isSubmitting ? "Saving..." : "Save Changes"}</button>
                                 <button type="button" onClick={() => {
-                                    setFormData(applicant);
+                                    setFormData(jurisdiction);
                                     setEditMode(false);
                                 }} className="btn btn-secondary">Cancel</button>
                             </div>
@@ -154,25 +142,37 @@ const Applicant = ({
                             {error ? <div className="invalid-feedback">{error}</div> : null}
                         </div>
                     </form>
+
                 </div>
 
             </div>
             <ActionModal
                 modalId={DELETE_MODAL_ID}
-                action={() => deleteApplicant(applicant)}
-                title={applicant.name}
-                message="Are you sure you want to delete this applicant?"
+                action={() => deleteJurisdiction(jurisdiction)}
+                title={jurisdiction.name}
+                message="Are you sure you want to delete this jurisdiction?"
                 actionText="Delete" />
+            <AddFormModal
+                modalId={ADD_FORM_MODAL_ID}
+                title={jurisdiction.name}
+                action={(fileId)=> addForm(fileId)}
+                actionText="Add Form" />
         </div>
     )
 
-
 export default compose(
-    withFormData('applicant'),
+    withFormData('jurisdiction'),
     withIsSubmitting,
     withError,
     withValidationErrors,
+    connect(
+        ({ bookmarks }) => ({ bookmarks }),
+        (dispatch) => ({
+            toggleBookmark: (jurisdiction) => dispatch({ type: "TOGGLE_BOOKMARK", jurisdiction })
+        })
+    ),
     withState('editMode', 'setEditMode', ({ editMode }) => editMode),
+    withState('note', 'setNote', ''),
     withHandlers({
         onSubmit: ({
             formData,
@@ -182,8 +182,8 @@ export default compose(
             setError,
             setFormData,
             setOutput,
-            updateApplicant,
-            applicant
+            updateJurisdiction,
+            jurisdiction
         }) => event => {
             event.preventDefault();
             // validate however
@@ -191,15 +191,63 @@ export default compose(
                 return setValidationErrors({ name: 'Name is required' });
             }
             setValidationErrors({});
-
             setIsSubmitting(true);
 
-            updateApplicant(applicant, { ...formData }).then(() => {
+            let updates = { ...formData }
+
+            if (jurisdiction.status !== formData.status) {
+                let milestones = jurisdiction.milestones || [];
+                let now = new Date();
+                let newMilestone = {
+                    timestamp: now.toString(),
+                    status: formData.status,
+                    notes: []
+                }
+                updates.milestones = milestones.concat(newMilestone);
+            }
+
+            updateJurisdiction(jurisdiction, updates).then(() => {
                 setEditMode(false);
                 setIsSubmitting(false);
                 setError(null);
             });
 
         },
+        addForm: ({
+            jurisdiction,
+            updateJurisdiction,
+            note,
+            setNote
+        }) => async fileId => {
+            // the form was just uploaded and its fields have been mapped
+            // now you need to update this Jurisdiction object with a pointer to the form
+
+            let oldForms = jurisdiction.submittals.commercial.forms;
+
+            let newForms = oldForms.concat({
+                formId: fileId
+            })
+
+            let updates = {
+                submittals: {
+                    commercial: {
+                        forms: newForms
+                    }
+                }
+            }
+            await updateJurisdiction(jurisdiction, updates);
+            console.log('jurisdition updated too!')
+        },
+        lastNote: ({ jurisdiction }) => () => {
+            let lastNote = 'No notes for this jurisdiction';
+            if (!jurisdiction.milestones) return lastNote;
+            jurisdiction.milestones.forEach(milestone => {
+                if (milestone.notes && milestone.notes.length > 0) {
+                    let { timestamp, text } = milestone.notes[milestone.notes.length - 1];
+                    lastNote = `${moment(timestamp).format('MMM D, h:mm a')} - ${text}`;
+                }
+            })
+            return lastNote
+        }
     })
-)(Applicant);
+)(Jurisdiction);

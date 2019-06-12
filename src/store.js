@@ -4,6 +4,9 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'
 import 'firebase/firestore' // make sure you add this for firestore
+import 'firebase/storage'
+import 'firebase/functions' // <- needed if using httpsCallable
+
 import { reactReduxFirebase } from 'react-redux-firebase'
 import { reduxFirestore } from 'redux-firestore'
 
@@ -16,11 +19,14 @@ const fbConfig = {
     messagingSenderId: "695668797889"
 };
 
+
 export default function configureStore(initialState, history) {
     // Initialize Firebase instance
     firebase.initializeApp(fbConfig)
     // Initialize Firestore with timeshot settings
     firebase.firestore().settings({ timestampsInSnapshots: true })
+    // Initialize Functions for httpsCallable
+    let functions = firebase.functions();
 
     const createStoreWithMiddleware = compose(
         reactReduxFirebase(firebase,

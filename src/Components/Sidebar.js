@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BarChart, Users, PlusCircle, FileText, Briefcase, Box, AlertTriangle } from 'react-feather';
+import { BarChart, FileText, Briefcase, Box, Settings, Inbox } from 'react-feather';
 import { NavLink } from 'react-router-dom';
 import Bookmarks from './Bookmarks';
 class Sidebar extends Component {
@@ -21,15 +21,9 @@ class Sidebar extends Component {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink className="nav-link" to="/applicants">
-                                <Users className="feather" />
-                                Applicants
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
                             <NavLink className="nav-link" to="/firms">
                                 <Briefcase className="feather" />
-                                Firms
+                                Firms & Applicants
                             </NavLink>
                         </li>
                         <li className="nav-item">
@@ -40,8 +34,14 @@ class Sidebar extends Component {
                         </li>
                         <li className="nav-item">
                             <NavLink className="nav-link" to="/submittals">
-                                <AlertTriangle className="feather" />
+                                <Settings className="feather" />
                                 Submittal Generator
+                            </NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink className="nav-link" to="/jurisdictions">
+                                <Inbox className="feather" />
+                                Jurisdictions
                             </NavLink>
                         </li>
                     </ul>

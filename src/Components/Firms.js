@@ -11,8 +11,9 @@ const NEW_FIRM_NAME = 'New Firm';
 const COLOR_MAP = {
     contractor: "primary",
     owner: "dark",
-    architect: "success",
-    engineer: "warning"
+    architect: "light",
+    engineer: "warning",
+    applicant: "success"
 }
 
 const enhance = compose(
@@ -52,6 +53,7 @@ const enhance = compose(
         },
         filterFirms: props => () => {
             return props.firms.filter((firm) => {
+                console.log(firm)
                 var keys = Object.keys(firm);
                 for (let i = 0; i < keys.length; i++) {
                     let value = String(firm[keys[i]]).toLowerCase();
@@ -71,13 +73,8 @@ const Firms = ({ match, firms, addFirm, deleteFirm, updateFirm, filter, setFilte
             <h1 className="h2">Firms</h1>
             <div className="btn-toolbar mb-2 mb-md-0">
                 <div className="btn-group mr-2">
-                    <button className="btn btn-sm btn-outline-secondary" onClick={addFirm}>Add Firm</button>
-                    <button className="btn btn-sm btn-outline-secondary">Import</button>
+                    <button className="btn btn-sm btn-outline-primary" onClick={addFirm}>Add Firm or Applicant</button>            
                 </div>
-                <button className="btn btn-sm btn-outline-secondary dropdown-toggle">
-                    <span data-feather="calendar"></span>
-                    This week
-                </button>
             </div>
         </div>
         <div className="d-flex data-table">

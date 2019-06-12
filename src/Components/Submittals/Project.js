@@ -4,7 +4,7 @@ import { compose, withHandlers, withState, withProps, lifecycle } from 'recompos
 import { withFormData, withError, withValidationErrors } from '../../HOC/forms';
 import { firestoreConnect, isLoaded, isEmpty } from 'react-redux-firebase';
 import { connect } from 'react-redux';
-import { isError } from 'util';
+import Joi from 'joi';
 
 let REF;
 
@@ -36,7 +36,8 @@ const enhance = compose(
             projects,
             loadProject,
             editMode,
-            setEditMode
+            setEditMode,
+            submittal
         }) => e => {
             e.preventDefault();
             e.stopPropagation();
@@ -46,16 +47,36 @@ const enhance = compose(
             //     });
             //     return;
             // }
-            setValidationErrors({});
+            
+            const { error, value } = submittal.schemas.project.validate(formData);
+            if ( error ) {
+                let { details } = error;
+                let validationErrors= details.reduce((acc, detail)=>{
+                    acc[detail.path[0]] = detail.message;
+                    return acc;
+                }, {})
+                console.log(validationErrors)
+                setValidationErrors(validationErrors);
+                return;
+            }
+            
+            
 
             // need to make the submittal redux state have the correct payload
             loadProject(formData);
             setEditMode(false);
             nextSection();
         },
-        loadProjectHandler: ({setFormData}) => (e, project) => {
+        loadProjectHandler: ({setFormData, formData}) => (e, project) => {
             e.preventDefault();
-            setFormData(project);
+            let projectCopy = Object.keys(project).reduce((acc, key) => { 
+                if (project[key]) acc[key] = project[key]
+                return acc; 
+            }, {})
+            setFormData({
+                ...formData,
+                ...projectCopy
+            });
         }
     }),
     withProps(() => ({
@@ -124,14 +145,15 @@ const Project = ({
                                 <input
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.name ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     name="name"
                                     id="name"
-                                    value={formData.name}
+                                    value={formData.name || "" || ""}
                                     onChange={onChange} />
+                                    {errors && errors.name ? <div className="invalid-feedback">{errors.name}</div> : null}
                             </div>
-                            {errors && errors.name ? <div className="invalid-feedback">{errors.name}</div> : null}
+                            
                         </div>
                         
                     </div>
@@ -144,14 +166,15 @@ const Project = ({
                                 <input
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.street ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     id="street"
                                     name="street"
-                                    value={formData.street}
+                                    value={formData.street || ""}
                                     onChange={onChange} />
+                                    {errors && errors.street ? <div className="invalid-feedback">{errors.street}</div> : null}
                             </div>
-                            {errors && errors.street ? <div className="invalid-feedback">{errors.street}</div> : null}
+                            
                         </div>
                     </div>
                     <div className="form-row">
@@ -163,11 +186,11 @@ const Project = ({
                                 <input
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.city ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     name="city"
                                     id="city"
-                                    value={formData.city}
+                                    value={formData.city || ""}
                                     onChange={onChange} />
                                 {errors && errors.city ? <div className="invalid-feedback">{errors.city}</div> : null}
                             </div>
@@ -181,14 +204,16 @@ const Project = ({
                                     required
                                     name="state"
                                     id="state"
-                                    className="form-control custom-select"
-                                    value={formData.state}
+                                    className={`form-control custom-select ${errors.state ? 'is-invalid' : ''}`}
+                                    value={formData.state || "GA"}
                                     onChange={onChange}>
                                     <option value="GA" defaultValue>GA</option>
+                                    <option value="MD" >MD</option>
 
                                 </select>
+                                {errors && errors.state ? <div className="invalid-feedback">{errors.state}</div> : null}
                             </div>
-                            {errors && errors.state ? <div className="invalid-feedback">{errors.state}</div> : null}
+                            
                         </div>
                         <div className="form-group col-md-3">
                             <div className="input-group input-group">
@@ -198,14 +223,15 @@ const Project = ({
                                 <input
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.zip ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     id="zip"
                                     name="zip"
-                                    value={formData.zip}
+                                    value={formData.zip || ""}
                                     onChange={onChange} />
+                                {errors && errors.zip ? <div className="invalid-feedback">{errors.zip}</div> : null}
                             </div>
-                            {errors && errors.zip ? <div className="invalid-feedback">{errors.zip}</div> : null}
+                            
                         </div>
                     </div>
                 </div>
@@ -218,6 +244,7 @@ const Project = ({
                     <div className="form-row">
                         <div className="form-group col-12">
                             <div className="custom-control custom-radio custom-control-inline">
+                                        {errors && errors.projectType ? <div className="invalid-feedback">{errors.projectType}</div> : null}
                                 <input value={"residential"} checked={formData.projectType === "residential"} onChange={onChange} type="radio" name="projectType" className="custom-control-input" id="projectType1" />
                                         <label className="custom-control-label" htmlFor="projectType1">Residential</label>
                             </div>
@@ -236,13 +263,15 @@ const Project = ({
                                 <input
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.cost ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     name="cost"
                                     id="cost"
+                                    value={formData.cost || ""}
                                     onChange={onChange} />
+                                    {errors && errors.cost ? <div className="invalid-feedback">{errors.cost}</div> : null}
                             </div>
-                            {errors && errors.cost ? <div className="invalid-feedback">{errors.cost}</div> : null}
+                            
                         </div>
                     </div>
                     <div className="form-row">
@@ -255,10 +284,11 @@ const Project = ({
                                 <textarea
                                     required
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${errors.scope ? 'is-invalid' : ''}`}
                                     readOnly={!editMode} 
                                     name="scope"
                                     id="scope"
+                                    value={formData.scope || ""}
                                     onChange={onChange}></textarea>
                                 {errors && errors.scope ? <div className="invalid-feedback">{errors.scope}</div> : null}
                             </div>

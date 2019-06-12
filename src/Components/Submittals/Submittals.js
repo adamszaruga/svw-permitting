@@ -47,8 +47,8 @@ class Submittals extends Component {
                         return <Project key={index} />
                     } else if (section === "contacts") {
                         return <Contacts key={index} />
-                    } else if (section === "disclaimer") {
-                        return <Disclaimer key={index} />
+                    // } else if (section === "disclaimer") {
+                    //     return <Disclaimer key={index} />
                     } else if (section === "submit") {
                         return <Submit key={index} />
                     }

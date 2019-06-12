@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Trash2, Edit2 } from 'react-feather';
+import { Users, Trash2, Edit2, Briefcase } from 'react-feather';
 import { compose, withHandlers, withState } from 'recompose';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
 import ActionModal from './ActionModal';
@@ -24,7 +24,12 @@ const Firm = ({
                 <div className="pl-3 py-1 w-30">
                     <form onSubmit={onSubmit} className="pt-3">
                         <div className="h2 w-100 d-flex">
-                            <Users className={"feather mr-2 text-primary align-self-center " + (editMode ? 'mb-3' : '')} />
+                            { firm.type === 'applicant' ?
+                                <Users className={"feather mr-2 text-primary align-self-center " + (editMode ? 'mb-3' : '')} />
+                            :
+                                <Briefcase className={"feather mr-2 text-primary align-self-center " + (editMode ? 'mb-3' : '')} />
+                            }
+                            
                             {editMode ? (
                                 <div className="form-group ">
                                     <input
@@ -151,6 +156,7 @@ const Firm = ({
                                 name="type"
                                 id="type"
                                 onChange={onChange}>
+                                <option value="applicant">Applicant</option>
                                 <option value="contractor">Contractor</option>
                                 <option value="architect">Architect</option>
                                 <option value="engineer">Engineer</option>
