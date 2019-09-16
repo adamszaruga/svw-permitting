@@ -2,26 +2,38 @@ import React from 'react';
 import { compose, withHandlers } from 'recompose';
 import { Settings } from 'react-feather';
 import { connect } from 'react-redux';
-import { withFirebase } from 'react-redux-firebase';
+import { withFirebase, firestoreConnect } from 'react-redux-firebase';
+
 const enhance = compose(
+    firestoreConnect([
+        { collection: 'submittals', orderBy: ['createdAt'] }
+    ]),
     connect(
-        ({ submittal }) => ({
-            submittal
+        ({ submittal, firestore }) => ({
+            submittal,
+            submittals: firestore.ordered.submittals
         }),
         (dispatch) => ({
             nextSection: () => dispatch({ type: "NEXT" }),
             setSection: (newIndex) => dispatch({ type: 'SET_SECTION_INDEX', newIndex })
         })
     ),
-    withFirebase,
+    // withFirebase,
     withHandlers({
-        clickHandler: ({ submittal, firebase }) => async e => {
+        clickHandler: ({ submittal, submittals, firestore }) => async e => {
             e.preventDefault();
-            console.log("firebase:")
-
-            console.log(firebase)
-            let response = await firebase.functions().httpsCallable('generateSubmittal')(submittal.payload);
-            console.log(response);
+            console.log("submittals:")
+            console.log(submittals);
+            console.log('submittal:')
+            console.log(submittal)
+            // let response = await firebase.functions().httpsCallable('generateSubmittal')(submittal.payload);
+            firestore.add('submittals', {
+                ...submittal.payload,
+                createdAt: firestore.FieldValue.serverTimestamp()
+            }).then(({ id }) => {
+                console.log(`Submittal Created: ${id}`)
+            })
+            
         }
     })
 )

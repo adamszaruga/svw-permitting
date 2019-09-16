@@ -33,7 +33,7 @@ class Sidebar extends Component {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink className="nav-link" to="/submittals">
+                            <NavLink className="nav-link" to="/generator">
                                 <Settings className="feather" />
                                 Submittal Generator
                             </NavLink>

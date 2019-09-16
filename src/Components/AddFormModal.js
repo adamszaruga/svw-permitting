@@ -2,8 +2,12 @@ import React from 'react';
 import { compose, withHandlers, withProps, withState } from 'recompose';
 import { firestoreConnect } from 'react-redux-firebase';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
-import { Document, Page } from 'react-pdf'
+import { pdfjs, Document, Page } from 'react-pdf'
 import { connect } from 'react-redux';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+
+let pageRef = null;
 
 const NORMALIZED_FIELDS = [
     'noc:state',
@@ -57,10 +61,15 @@ const NORMALIZED_FIELDS = [
 const enhance = compose(
     firestoreConnect([]),
     withProps(() => ({
-        formRef: React.createRef()
+        formRef: React.createRef(),
+        pageRef: React.createRef()
     })),
     withState('parsedFields', 'setParsedFields', null),
     withState('fileId', 'setFileId', null),
+    withState('pages', 'setPages', { total: null, current: 1}),
+    withState('currentFormInput', 'setCurrentFormInput', null),
+    withState('reactPDFAnnotations', 'setReactPDFAnnotations', null),
+    withState('listenersAttached', 'setListenersAttached', false),
     withProps(() => ({
         mappings: {}
     })),
@@ -146,7 +155,7 @@ const enhance = compose(
     })
 );
 
-let AddFormModal = ({ modalId, title, onChange, formData, actionText, handleFileUpload, formRef, parsedFields, updateMappings, done }) => (
+let AddFormModal = ({ modalId, title, onChange, formData, actionText, pages, setPages, handleFileUpload, formRef, pageRef, currentFormInput, setCurrentFormInput, reactPDFAnnotations, setReactPDFAnnotations, listenersAttached, setListenersAttached, parsedFields, updateMappings, done }) => (
     <div className="modal fade" id={modalId} tabIndex="-1" role="dialog">
         <div className="modal-dialog" role="document">
             <div className="modal-content">
@@ -162,37 +171,65 @@ let AddFormModal = ({ modalId, title, onChange, formData, actionText, handleFile
                         <input ref={ formRef } onChange={(e)=>handleFileUpload(e)} type="file" className="custom-file-input" id="customFile" />
                         <label className="custom-file-label" htmlFor="customFile">Choose file</label>
                     </div>
+                    { currentFormInput ?  
+                        <div>Selected Form Field ID: {currentFormInput}</div>
+                        : null}
+                    { reactPDFAnnotations && currentFormInput ? 
+                        <div>
+                            <div>Field Name: {reactPDFAnnotations.find(a => a.id === currentFormInput).fieldName}</div>
+                            <div>Field Type: {reactPDFAnnotations.find(a => a.id === currentFormInput).fieldType}</div>
+                            <div>Field Value: {reactPDFAnnotations.find(a => a.id === currentFormInput).fieldValue}</div>
+                            <select className="form-control">
+                                <option value="none" key={-100}>none</option>
+                                {NORMALIZED_FIELDS.map((mapping, i) => (
+                                    <option value={mapping} key={i}>{mapping}</option>
+                                ))}
+                            </select>
+                        </div>
+                        : null}
+                    {pages.total ? `page ${pages.current} of ${pages.total}` : ''}
+                    {pages.total > 1 
+                        ?   <div>
+                                {pages.current > 1 ? <button onClick={() => setPages({total: pages.total, current: pages.current-1})}> {`<`} </button> : ''}
+                                {pages.current < pages.total ? <button onClick={() => setPages({ total: pages.total, current: pages.current + 1 })}> {`>`} </button> : ''}
+                            </div> 
+                        : ''}
                     { formRef.current && formRef.current.files && formRef.current.files[0] ?
                         <Document
                             file={formRef.current.files[0]}
-                            onLoadSuccess={() => console.log('react-pdf loaded the pdf!')}
+                            onLoadSuccess={({numPages}) => {
+                                console.log('react-pdf loaded the pdf!')
+                                setPages({total: numPages, current: 1})
+                            }}
                         >
-                            <Page pageIndex={0} />
+                            <Page 
+                                pageNumber={pages.current} 
+                                ref={pageRef}
+                                inputRef={ref => {
+                                    let clickListener = (e) => {
+                                        if (e.target.parentNode && e.target.parentNode.dataset && e.target.parentNode.dataset.annotationId) {
+                                            setCurrentFormInput(e.target.parentNode.dataset.annotationId)
+                                        }
+                                    }
+                                    if (ref && !listenersAttached) {
+                                        ref.addEventListener('click', clickListener)
+                                        setListenersAttached(true);
+                                    }
+                                    
+                                }}
+                                renderAnnotationLayer={true}
+                                renderInteractiveForms={true}
+                                onGetAnnotationsSuccess={annotations => {
+                                    console.log(annotations);
+                                    setReactPDFAnnotations(annotations);
+                                }}
+                               
+                                
+                            />
                         </Document>
                     : ''}
                     
                     <form>
-                        {
-                            parsedFields ?
-                            parsedFields.map(({id}, index) => (
-                                <div key={index} className="form-group">
-                                    <label htmlFor={id}>{id}</label>
-                                    <select
-                                        name={id}
-                                        className="form-control"
-                                        value={formData[id] || "none"}
-                                        onChange={onChange}>
-                                        <option value="none" key={-100}>none</option>
-                                        {NORMALIZED_FIELDS.map((mapping, i)=>(
-                                            <option value={mapping} key={i}>{mapping}</option> 
-                                        ))}
-
-                                    </select>
-                                </div>
-                            ))
-                            :
-                            'nothing'
-                        }
                         <button onClick={e => updateMappings(e)} className='btn btn-outline-secondary w-100'>Update Mappings</button>
                     </form>
                 </div>

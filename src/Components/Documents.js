@@ -1,152 +1,101 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { compose } from 'redux';
+import { connect } from 'react-redux'
+import { withRouter, NavLink, Route } from 'react-router-dom';
+import { withHandlers, withState } from 'recompose';
+import { firestoreConnect, isLoaded, isEmpty } from 'react-redux-firebase'
+import Document from './Document';
 
-class Documents extends Component {
-    render() {
-        return (
-            <div>
-                <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 className="h2">Documents</h1>
-                    <div className="btn-toolbar mb-2 mb-md-0">
-                        <div className="btn-group mr-2">
-                            <button className="btn btn-sm btn-outline-secondary">Share</button>
-                            <button className="btn btn-sm btn-outline-secondary">Export</button>
-                        </div>
-                        <button className="btn btn-sm btn-outline-secondary dropdown-toggle">
-                            <span data-feather="calendar"></span>
-                            This week
-                        </button>
-                    </div>
-                </div>
-                <div className="table-responsive">
-                    <table className="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                                <th>Header</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1,001</td>
-                                <td>Lorem</td>
-                                <td>ipsum</td>
-                                <td>dolor</td>
-                                <td>sit</td>
-                            </tr>
-                            <tr>
-                                <td>1,002</td>
-                                <td>amet</td>
-                                <td>consectetur</td>
-                                <td>adipiscing</td>
-                                <td>elit</td>
-                            </tr>
-                            <tr>
-                                <td>1,003</td>
-                                <td>Integer</td>
-                                <td>nec</td>
-                                <td>odio</td>
-                                <td>Praesent</td>
-                            </tr>
-                            <tr>
-                                <td>1,003</td>
-                                <td>libero</td>
-                                <td>Sed</td>
-                                <td>cursus</td>
-                                <td>ante</td>
-                            </tr>
-                            <tr>
-                                <td>1,004</td>
-                                <td>dapibus</td>
-                                <td>diam</td>
-                                <td>Sed</td>
-                                <td>nisi</td>
-                            </tr>
-                            <tr>
-                                <td>1,005</td>
-                                <td>Nulla</td>
-                                <td>quis</td>
-                                <td>sem</td>
-                                <td>at</td>
-                            </tr>
-                            <tr>
-                                <td>1,006</td>
-                                <td>nibh</td>
-                                <td>elementum</td>
-                                <td>imperdiet</td>
-                                <td>Duis</td>
-                            </tr>
-                            <tr>
-                                <td>1,007</td>
-                                <td>sagittis</td>
-                                <td>ipsum</td>
-                                <td>Praesent</td>
-                                <td>mauris</td>
-                            </tr>
-                            <tr>
-                                <td>1,008</td>
-                                <td>Fusce</td>
-                                <td>nec</td>
-                                <td>tellus</td>
-                                <td>sed</td>
-                            </tr>
-                            <tr>
-                                <td>1,009</td>
-                                <td>augue</td>
-                                <td>semper</td>
-                                <td>porta</td>
-                                <td>Mauris</td>
-                            </tr>
-                            <tr>
-                                <td>1,010</td>
-                                <td>massa</td>
-                                <td>Vestibulum</td>
-                                <td>lacinia</td>
-                                <td>arcu</td>
-                            </tr>
-                            <tr>
-                                <td>1,011</td>
-                                <td>eget</td>
-                                <td>nulla</td>
-                                <td>className</td>
-                                <td>aptent</td>
-                            </tr>
-                            <tr>
-                                <td>1,012</td>
-                                <td>taciti</td>
-                                <td>sociosqu</td>
-                                <td>ad</td>
-                                <td>litora</td>
-                            </tr>
-                            <tr>
-                                <td>1,013</td>
-                                <td>torquent</td>
-                                <td>per</td>
-                                <td>conubia</td>
-                                <td>nostra</td>
-                            </tr>
-                            <tr>
-                                <td>1,014</td>
-                                <td>per</td>
-                                <td>inceptos</td>
-                                <td>himenaeos</td>
-                                <td>Curabitur</td>
-                            </tr>
-                            <tr>
-                                <td>1,015</td>
-                                <td>sodales</td>
-                                <td>ligula</td>
-                                <td>in</td>
-                                <td>libero</td>
-                            </tr>
-                        </tbody>
-                    </table>
+const NEW_DOCUMENT_NAME = 'New Document'
+
+const enhance = compose(
+    firestoreConnect([
+        { collection: 'documents', orderBy: ['createdAt'] }
+    ]),
+    connect(
+        ({ firestore }) => ({
+            documents: firestore.ordered.documents,
+        })
+    ),
+    withRouter,
+    withState('filter', 'setFilter', ''),
+    withHandlers({
+        addDocument: props => () => {
+            props.firestore.add('documents', {
+                name: NEW_DOCUMENT_NAME,
+                createdAt: props.firestore.FieldValue.serverTimestamp()
+            }).then(({ id }) => {
+                props.history.push(`/documents/${id}`)
+            })
+        },
+        updateDocument: props => (document, updates) => {
+            delete updates.id;
+            return props.firestore.update({ collection: 'documents', doc: document.id }, updates)
+        },
+        deleteDocument: props => (document) => {
+            props.history.push('/documents');
+            return props.firestore.update({ collection: 'documents', doc: document.id }, { isArchived: true });
+        },
+        filterDocuments: props => () => {
+            return props.documents.filter((document) => {
+                var keys = Object.keys(document);
+                for (let i = 0; i < keys.length; i++) {
+                    let value = String(document[keys[i]]).toLowerCase();
+                    if (value.indexOf(props.filter) > -1) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+        }
+    }),
+)
+
+const Documents = ({ match, location, documents, addDocument, deleteDocument, updateDocument, filter, setFilter, filterDocuments }) => (
+    <div>
+        <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 className="h2">Documents</h1>
+            <div className="btn-toolbar mb-2 mb-md-0">
+                <div className="btn-group mr-0">
+                    <button className="btn btn-sm btn-outline-primary" onClick={addDocument}>Add Document</button>
                 </div>
             </div>
-        );
-    }
-}
+        </div>
+        <div className="d-flex data-table">
+            <div className="list-group list-group-flush w-100">
+                <div className="list-group-item text-light" style={{ backgroundColor: "#4C5256" }}>
+                    <input onInput={(e) => setFilter(e.target.value.toLowerCase())} className="form-control form-control-dark w-100" type="text" placeholder="Quick Search" aria-label="Search" />
+                </div>
+                {
+                    !isLoaded(documents)
+                        ? (<div className="lds-default mx-auto my-5"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>)
+                        : isEmpty(documents)
+                            ? 'No documents to show'
+                            : filterDocuments().map((document) => (
+                                !document.isArchived ? <NavLink exact to={`${match.path}/${document.id}`} className="list-group-item list-group-item-action flex-column align-items-start" key={document.id}>
+                                    <div className="d-flex w-100 justify-content-between align-items-baseline">
+                                        <h5>{document.name}</h5>
+                                    </div>
+                                </NavLink> : null
+                            ))
+                }
+            </div>
+            {
+                !isLoaded(documents)
+                    ? ''
+                    : <Route exact path={`${match.path}/:id`} render={({ match }) => {
+                        let document = documents.find(document => document.id === match.params.id);
+                        return <Document key={document ? document.id : 'nodocumentfound'}
+                            document={document}
+                            deleteDocument={deleteDocument}
+                            updateDocument={updateDocument}
+                            editMode={document ? (document.name === NEW_DOCUMENT_NAME ? true : false) : false} />
+                    }} />
+            }
 
-export default Documents;
+        </div>
+        
+    </div>
+)
+
+export default enhance(Documents)

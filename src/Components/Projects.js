@@ -29,6 +29,7 @@ const enhance = compose(
     ),
     withRouter,
     withState('filter', 'setFilter', ''),
+    withState('includeArchived', 'setIncludeArchived', false),
     withHandlers({
         addProject: props => () => {
             let now = new Date();
@@ -74,7 +75,7 @@ const enhance = compose(
     }),
 )
 
-const Projects = ({match, location, projects, addProject, deleteProject, updateProject, filter, setFilter, filterProjects}) => (
+const Projects = ({match, location, projects, addProject, deleteProject, updateProject, filter, setFilter, filterProjects, setIncludeArchived, includeArchived}) => (
     <div>
         <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 className="h2">Projects</h1>
@@ -88,6 +89,12 @@ const Projects = ({match, location, projects, addProject, deleteProject, updateP
             <div className="list-group list-group-flush w-100">
                 <div className="list-group-item text-light" style={{backgroundColor: "#4C5256"}}>
                     <input onInput={(e)=>setFilter(e.target.value.toLowerCase())} className="form-control form-control-dark w-100" type="text" placeholder="Quick Search" aria-label="Search" />
+                    <div className="form-check">
+                        <input onChange={e => setIncludeArchived(!includeArchived)} value={includeArchived} className="form-check-input" type="checkbox" value="" id="archiveCheck"/> 
+                        <label className="form-check-label" htmlFor="archiveCheck">
+                            Include archived projects
+                        </label>
+                    </div>
                 </div>
                 {
                     !isLoaded(projects)
@@ -95,7 +102,7 @@ const Projects = ({match, location, projects, addProject, deleteProject, updateP
                         : isEmpty(projects)
                             ? 'No projects to show'
                             : filterProjects().map((project) => (
-                                !project.isArchived ? <NavLink exact to={`${match.path}/${project.id}`} className="list-group-item list-group-item-action flex-column align-items-start" key={project.id}>
+                                !project.isArchived || includeArchived ? <NavLink exact to={`${match.path}/${project.id}`} className="list-group-item list-group-item-action flex-column align-items-start" key={project.id}>
                                     <div className="d-flex w-100 justify-content-between align-items-baseline">
                                         <h5>{project.name}</h5>
                                         

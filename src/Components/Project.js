@@ -5,7 +5,9 @@ import { compose, withHandlers, withState } from 'recompose';
 import { Link } from 'react-router-dom';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
 import { connect } from 'react-redux';
+import { firestoreConnect, isLoaded, isEmpty } from 'react-redux-firebase'
 import ActionModal from './ActionModal';
+
 
 let DELETE_MODAL_ID = "deleteModal";
 
@@ -27,7 +29,7 @@ const Project = ({
     lastNote,
     bookmarks,
     toggleBookmark,
-    createSubmittal
+    submittals
 })=> (
     <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "620px" }}>
         <div className="position-fixed w-100 m-2">
@@ -88,12 +90,18 @@ const Project = ({
                             <select 
                                 required
                                 readOnly={!editMode} 
-                                name="state" 
+                                name="state"
+                                value={formData.state} 
                                 id="state" 
                                 className="form-control"
                                 onChange={onChange}>
                                 <option value="GA" defaultValue>GA</option>
-        
+                                <option value="NC" >NC</option>
+                                <option value="SC" >SC</option>
+                                <option value="VA" >VA</option>
+                                <option value="PA" >PA</option>
+                                <option value="MD" >MD</option>
+                                <option value="WV" >WV</option>
                             </select>
                             {errors.state ? <div class="invalid-feedback">{errors.state}</div> : null} 
                         </div>
@@ -150,8 +158,10 @@ const Project = ({
                     {!editMode ? (
                         <form onSubmit={(e) => {e.preventDefault();e.stopPropagation();}}>
                             <div className="form-group">
-                                <label htmlFor="latest-note">Submittal</label>
-                                <Link to={`/submittals/${project.id}`} className="btn btn-outline-primary w-100">Generate Submittal Packet</Link>
+                                <label htmlFor="latest-note">Submittals</label>
+                                {!isLoaded(submittals) ? 'error' : isEmpty(submittals) ? 'No submittals' : submittals.filter(({project: { id }}) => id === project.id).map(({id, createdAt}, index)=>(
+                                    <Link key={index} to={`/submittals/${id}`} className="btn btn-outline-primary w-100">{createdAt.toString()}</Link>
+                                ))}
                             </div>
                         </form>
                     ) : null}
@@ -186,8 +196,14 @@ export default compose(
     withIsSubmitting,
     withError,
     withValidationErrors,
+    firestoreConnect([
+        { collection: 'submittals', orderBy: ['createdAt'] }
+    ]),
     connect(
-        ({ bookmarks }) => ({ bookmarks }),
+        ({ bookmarks, firestore }) => ({ 
+            bookmarks,
+            submittals: firestore.ordered.submittals
+         }),
         (dispatch) => ({
             toggleBookmark: (project) => dispatch({type: "TOGGLE_BOOKMARK", project})
         })

@@ -26,9 +26,7 @@ function pdfParsePromisified(filePath) {
     }) 
 }
 
-
-
-exports.parsePDF = functions.storage.object().onFinalize( async ({
+exports.parsePDF = functions.storage.object().onFinalize(async ({
     bucket,
     name,
     contentType,
@@ -81,9 +79,7 @@ exports.generateSubmittal = functions.https.onCall((payload, context) => {
     }
 })
 
-exports.floridaNOC = functions.https.onRequest((req, res) => {
-    res.json({foo:'bar'})
-})
+
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
