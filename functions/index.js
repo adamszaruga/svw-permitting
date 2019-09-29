@@ -6,10 +6,16 @@ const os = require('os')
 const fs = require('fs')
 const { Storage } = require('@google-cloud/storage');
 const storage = new Storage();
+const pdftk = require('node-pdftk');
+const cors = require('cors')({
+    origin: true
+})
 
-
+process.env['LD_LIBRARY_PATH'] = '/user_code/bin'; // This loads the PDF TK library
 
 admin.initializeApp();
+const db = admin.database();
+
 
 
 function pdfParsePromisified(filePath) {
@@ -77,6 +83,60 @@ exports.generateSubmittal = functions.https.onCall((payload, context) => {
         status: "OK",
         data
     }
+})
+
+
+
+exports.fillDocuments = functions.https.onRequest((req, res) => {
+    
+
+    return cors(req, res, async () => {
+        let payload = req.body
+
+        const fileBucket = storage.bucket('svw-permitting');
+        const destination = path.join(os.tmpdir(), 'formUpload1568920524588.pdf');
+        try {
+            await fileBucket.file('forms/formUpload1568920524588.pdf').download({ destination })
+        } catch (err) {
+            console.log('cant download file')
+        }
+        
+        console.log('PDF downloaded locally to', destination);
+
+        return pdftk.input(destination)
+            .dumpDataFields()
+            .output()
+            .then(dataFields => {
+                res.status(200).json({
+                    payload,
+                    dataFields
+                });
+            })
+        
+    });
+        
+    
+    // return pdftk.input(destination) // here's where you fill out the form fields
+    //         .fillForm({
+    //             State: 'GA',
+    //             Zip: '30318'
+    //         })
+    //         .output()
+    //         .then(buffer => {
+    //             response.set('Content-disposition', 'inline; filename="simplePdf.pdf"');
+    //             response.set('Content-type', 'application/pdf');
+    //             response.send(buffer);
+    //         }).catch(err => {
+    //             response.send(err)
+    //         })
+      
+        
+    
+    // return {
+    //     status: "OK",
+    //     payload,
+    //     parser: pdfParser.getAllFieldsTypes()
+    // }
 })
 
 

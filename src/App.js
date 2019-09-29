@@ -9,12 +9,10 @@ import Project from './Components/Project';
 import ProgressBar from './Components/ProgressBar';
 import Firm from './Components/Firm';
 import Document from './Components/Document';
-import Submittals from './Components/Submittals/Submittals';
+import Submittal from './Components/Submittal';
 import Jurisdiction from './Components/Jurisdiction';
-import SubmittalsContainer from './Components/SubmittalsContainer';
-import ActionCenter from './Components/ActionCenter';
 import CollectionCRUD from './RenderProps/CollectionCRUD';
-import { Users, Briefcase, Map, Phone, Mail } from 'react-feather';
+import { Map, Phone, Mail } from 'react-feather';
 import IconList from './Components/IconList';
 
 const FIRM_COLOR_MAP = {
@@ -33,7 +31,6 @@ class App extends Component {
         <div className="container-fluid">
           <div className="row">
             <Sidebar />
-
             <main role="main" className="col-md-10 ml-sm-auto col-lg-10 px-4" >
               <Switch>
                 <Route exact path="/" render={()=><Dashboard />} /> 
@@ -92,7 +89,7 @@ class App extends Component {
                 }} />
                 <Route path="/documents" render={() => {
                   return <CollectionCRUD
-                    collections={['documents']}
+                    collections={['documents', 'jurisdictions']}
                     renderTopRight={(document) => null}
                     renderMain={(document) => null}
                     renderItem={(document, deleteDocument, updateDocument) => {
@@ -102,22 +99,17 @@ class App extends Component {
                         updateDocument={updateDocument}
                         editMode={document ? (document.name === 'New document' ? true : false) : false} />
                     }}
-                    itemDefaults={{}}
+                    itemDefaults={{
+                      isGeneralDoc: false,
+                      isJurisdictionDoc: false,
+                      jurisdictionId: null,
+                      isFirmDoc: false,
+                      firmId: null,
+                      fieldMappings: {}
+                    }}
                   />
                 }} />
-                <Route exact path="/submittals/:id" render={({match: {params}}) => {
-                  let { id } = params;
-                  return (<ActionCenter submittalId={id}/>)
-                }} /> 
-                <Route path="/submittals" render={() => {
-                  return <CollectionCRUD
-                    collections={['submittals']}
-                    renderTopRight={(submittal) => null}
-                    renderMain={({project, jurisdiction, createdAt}) => (<h6>{createdAt.toDate().toString()}</h6>)}
-                    renderItem={(submittal, deleteSubmittal, updateSubmittal) => 'submittal'}
-                  />
-                }} />
-                <Route exact path="/generator" render={() => <Submittals /> } /> 
+                {/* <Route exact path="/generator" render={() => <Submittals /> } />  */}
                 <Route path="/jurisdictions" render={() => {
                   return <CollectionCRUD 
                             collections={['jurisdictions']}
@@ -140,6 +132,24 @@ class App extends Component {
                             }}
                         />
                 }} /> 
+                <Route path="/submittals" render={() => {
+                  return <CollectionCRUD
+                    collections={['submittals']}
+                    renderTopRight={(submittal) => null}
+                    renderMain={(submittal) => null}
+                    renderItem={(submittal, deleteSubmittal, updateSubmittal) => {
+                      return <Submittal key={submittal ? submittal.id : 'nosubmittalfound'}
+                        submittal={submittal}
+                        deleteSubmittal={deleteSubmittal}
+                        updateSubmittal={updateSubmittal}
+                        editMode={submittal ? (submittal.name === 'New submittal' ? true : false) : false} />
+                    }}
+                    itemDefaults={{
+                      entities: [],
+                      shipments: [],
+                      packets: []
+                    }} />
+                }} />
               </Switch>
             </main>
           </div>

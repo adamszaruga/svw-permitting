@@ -1,17 +1,15 @@
 import React from 'react';
-import moment from 'moment';
 import { Inbox, Trash2, Edit2, Bookmark } from 'react-feather';
-import { compose, withHandlers, withState } from 'recompose';
-import { Link } from 'react-router-dom';
+import { compose, withHandlers, withState, withProps } from 'recompose';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
 import { connect } from 'react-redux';
 import ActionModal from './ActionModal';
-import AddFormModal from './AddFormModal';
+import FieldMapModal from './FieldMapModal';
 import { Typeahead } from 'react-typeahead'
-import { firestoreConnect, isLoaded, isEmpty } from 'react-redux-firebase'
+import { firestoreConnect, firebaseConnect, isLoaded, isEmpty } from 'react-redux-firebase'
 
 let DELETE_MODAL_ID = "deleteModal";
-let ADD_FORM_MODAL_ID = "addFormModal";
+let FIELD_MAP_MODAL_ID = "mapFieldsModal";
 
 const Document = ({
     document,
@@ -25,10 +23,13 @@ const Document = ({
     isSubmitting,
     setFormData,
     formData,
-    addForm,
+    saveMappings,
     bookmarks,
     toggleBookmark,
-    jurisdictions
+    jurisdictions,
+    firms,
+    formRef,
+    handleFileUpload
 }) => (
         <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "620px" }}>
             <div className="position-fixed w-100 m-2">
@@ -57,43 +58,98 @@ const Document = ({
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="street">Street Address</label>
-                            {/* <input
-                                required
-                                readOnly={!editMode}
-                                value={formData.street}
-                                type="text"
-                                className="form-control"
-                                name="street"
-                                id="street"
-                                placeholder="Street Address"
-                                onChange={onChange} /> */}
-                            {!isLoaded(jurisdictions)? '' : 
-                                <Typeahead
-                                    options={jurisdictions}
-                                    maxVisible={2}
-                                    filterOption={(inputValue, option)=>{
-                                        return option.name.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
-                                    }}
-                                    displayOption={(option)=>option.name}
-                                    onOptionSelected={(option)=>setFormData({...formData, jurisdictionId: option.id})}
-                                />
-                            }
-                            <div className="form-check form-check-inline">
-                                <input className="form-check-input" type="checkbox" id="inlineCheckbox1" value="option1" />
-                                    <label className="form-check-label" htmlFor="inlineCheckbox1">1</label>
+                            <label>Jurisdiction</label>
+                            <div className="input-group mb-3">
+                                <div className="input-group-prepend">
+                                    <div className="input-group-text">
+                                        <input 
+                                            type="checkbox" 
+                                            value={formData.isJurisdictionDoc}
+                                            checked={formData.isJurisdictionDoc}
+                                            disabled={!editMode}
+                                            id="isJurisdictionDoc"
+                                            name="isJurisdictionDoc"
+                                            onChange={onChange}
+                                             />
+                                    </div>
                                 </div>
-                                <div className="form-check form-check-inline">
-                                    <input className="form-check-input" type="checkbox" id="inlineCheckbox2" value="option2" />
-                                    <label className="form-check-label" htmlFor="inlineCheckbox2">2</label>
-                                </div>
-                                <div className="form-check form-check-inline">
-                                    <input className="form-check-input" type="checkbox" id="inlineCheckbox3" value="option3" disabled />
-                                    <label className="form-check-label" htmlFor="inlineCheckbox3">3 (disabled)</label>
-                                </div>
+                                {!isLoaded(jurisdictions) ? '' :
+                                    <Typeahead
+                                        name="jurisdictionId"
+                                        customClasses={{
+                                            input: "form-control",
+                                        }}
+                                        value={formData.jurisdictionId ? jurisdictions.find(({id}) => id === formData.jurisdictionId).name : null}
+                                        disabled={!editMode}
+                                        options={jurisdictions}
+                                        maxVisible={3}
+                                        filterOption={(inputValue, option) => {
+                                            return !option.isArchived && option.name.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
+                                        }}
+                                        displayOption={(option) => option.name}
+                                        onOptionSelected={(option) => setFormData({ ...formData, jurisdictionId: option.id })}
+                                    />
+                                }
+                                
+                            </div>
                             {errors.street ? <div className="invalid-feedback">{errors.street}</div> : null}
                         </div>
-                        
+                        <div className="form-group">
+                            <label>Firm</label>
+                            <div className="input-group mb-3">
+                                <div className="input-group-prepend">
+                                    <div className="input-group-text">
+                                        <input
+                                            type="checkbox"
+                                            value={formData.isFirmDoc}
+                                            checked={formData.isFirmDoc}
+                                            disabled={!editMode}
+                                            id="isFirmDoc"
+                                            name="isFirmDoc"
+                                            onChange={onChange}
+                                        />
+                                    </div>
+                                </div>
+                                {!isLoaded(firms) ? '' :
+                                    <Typeahead
+                                        name="firmId"
+                                        customClasses={{
+                                            input: "form-control",
+                                        }}
+                                        value={formData.firmId ? firms.find(({ id }) => id === formData.firmId).name : null}
+                                        disabled={!editMode}
+                                        options={firms}
+                                        maxVisible={3}
+                                        filterOption={(inputValue, option) => {
+                                            return !option.isArchived && option.name.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
+                                        }}
+                                        displayOption={(option) => option.name}
+                                        onOptionSelected={(option) => setFormData({ ...formData, firmId: option.id })}
+                                    />
+                                }
+
+                            </div>
+                            {errors.street ? <div className="invalid-feedback">{errors.street}</div> : null}
+                        </div>
+                        <div className="form-group">
+                            <label>General</label>
+                            <div className="input-group mb-3">
+                                <div className="input-group-prepend">
+                                    <div className="input-group-text">
+                                        <input
+                                            type="checkbox"
+                                            value={formData.isGeneralDoc}
+                                            checked={formData.isGeneralDoc}
+                                            disabled={!editMode}
+                                            id="isGeneralDoc"
+                                            name="isGeneralDoc"
+                                            onChange={onChange}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            {errors.street ? <div className="invalid-feedback">{errors.street}</div> : null}
+                        </div>
                         {editMode ? (
                             <div className="form-group">
                                 <button type="submit" className="btn btn-primary mr-2">{isSubmitting ? "Saving..." : "Save Changes"}</button>
@@ -103,6 +159,12 @@ const Document = ({
                                 }} className="btn btn-secondary">Cancel</button>
                             </div>
                         ) : null}
+                        <div className="custom-file">
+                            <input ref={formRef} onChange={(e) => handleFileUpload(e)} type="file" className="custom-file-input" id="customFile" />
+                            <label className="custom-file-label" htmlFor="customFile">{formData.fileName ? formData.fileName : "No file uploaded"}</label>
+                        </div>
+                        <button disabled={!formData.fileName} type="button" data-toggle="modal" data-target={"#" + FIELD_MAP_MODAL_ID} className='btn btn-outline-secondary w-100 mt-2'>Map Fields</button>
+
                         <div className="form-group">
                             {error ? <div className="invalid-feedback">{error}</div> : null}
                         </div>
@@ -117,33 +179,42 @@ const Document = ({
                 title={document.name}
                 message="Are you sure you want to delete this document?"
                 actionText="Delete" />
-            <AddFormModal
-                modalId={ADD_FORM_MODAL_ID}
+            <FieldMapModal
+                modalId={FIELD_MAP_MODAL_ID}
                 title={document.name}
-                action={(fileId) => addForm(fileId)}
-                actionText="Add Form" />
+                document={document}
+                action={(newMappings) => saveMappings(newMappings)}
+                actionText="Save Mappings" />
         </div>
     )
 
 export default compose(
+    firebaseConnect(),
+    firestoreConnect([
+        { collection: 'jurisdictions', orderBy: ['createdAt'] },
+        { collection: 'firms', orderBy: ['createdAt'] }
+    ]),
     withFormData('document'),
     withIsSubmitting,
     withError,
     withValidationErrors,
-    firestoreConnect([
-        { collection: 'jurisdictions', orderBy: ['createdAt'] }
-    ]),
+    withProps(() => ({
+        formRef: React.createRef(),
+        pageRef: React.createRef()
+    })),
     connect(
         ({ bookmarks, firestore }) => ({ 
             bookmarks,
-            jurisdictions: firestore.ordered.jurisdictions
+            jurisdictions: firestore.ordered.jurisdictions,
+            firms: firestore.ordered.firms
         }),
         (dispatch) => ({
             toggleBookmark: (document) => dispatch({ type: "TOGGLE_BOOKMARK", document })
         })
     ),
     withState('editMode', 'setEditMode', ({ editMode }) => editMode),
-    withState('note', 'setNote', ''),
+    withState('parsedFields', 'setParsedFields', null),
+    withState('fileId', 'setFileId', null),
     withHandlers({
         onSubmit: ({
             formData,
@@ -184,41 +255,57 @@ export default compose(
             });
 
         },
-        addForm: ({
-            document,
-            updateDocument,
-            note,
-            setNote
-        }) => async fileId => {
-            // the form was just uploaded and its fields have been mapped
-            // now you need to update this Document object with a pointer to the form
-
-            let oldForms = document.submittals.commercial.forms;
-
-            let newForms = oldForms.concat({
-                formId: fileId
-            })
-
-            let updates = {
-                submittals: {
-                    commercial: {
-                        forms: newForms
+        handleFileUpload: ({ firebase, firestore, formRef, setParsedFields, setFileId, document, updateDocument, formData, setFormData }) => e => {
+            let file = formRef.current.files[0];
+            if (file) {
+                firebase.uploadFile('forms', file, undefined, { name: `formUpload${Date.now()}.pdf` }).then(({
+                    uploadTaskSnapshot: {
+                        metadata: {
+                            bucket,
+                            cacheControl,
+                            contentDisposition,
+                            contentEncoding,
+                            contentLanguage,
+                            contentType,
+                            customMetadata,
+                            fullPath,
+                            generation,
+                            md5Hash,
+                            metageneration,
+                            name: fileName,
+                            size,
+                            timeCreated,
+                            type
+                        }
                     }
-                }
+                }) => {
+               
+                    updateDocument(document, { fileName, size, fullPath, timeCreated }).then(()=>setFormData({...formData, fileName}));
+                    // console.log(fileId)
+                    // let doc = firestore.collection('forms').doc(fileId);
+
+                    // let stopListening = doc.onSnapshot(docSnapshot => {
+                    //     console.dir(docSnapshot);
+                    //     let data = docSnapshot.data();
+
+                    //     if (data) {
+                    //         console.dir(data)
+                    //         setFileId(fileId);
+                    //         setParsedFields(data.parsedFields);
+                    //         stopListening();
+                    //     }
+                    // }, err => {
+                    //     console.log(`Encountered error: ${err}`);
+                    // });
+                }).catch(err => {
+                    console.log(err);
+                });
+
+
             }
-            await updateDocument(document, updates);
-            console.log('jurisdition updated too!')
         },
-        lastNote: ({ document }) => () => {
-            let lastNote = 'No notes for this document';
-            if (!document.milestones) return lastNote;
-            document.milestones.forEach(milestone => {
-                if (milestone.notes && milestone.notes.length > 0) {
-                    let { timestamp, text } = milestone.notes[milestone.notes.length - 1];
-                    lastNote = `${moment(timestamp).format('MMM D, h:mm a')} - ${text}`;
-                }
-            })
-            return lastNote
+        saveMappings: ({document, updateDocument}) => newMappings => {
+            updateDocument(document, { fieldMappings: newMappings })
         }
     })
 )(Document);

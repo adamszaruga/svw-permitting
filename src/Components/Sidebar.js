@@ -33,17 +33,23 @@ class Sidebar extends Component {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink className="nav-link" to="/generator">
-                                <Settings className="feather" />
-                                Submittal Generator
-                            </NavLink>
-                        </li>
-                        <li className="nav-item">
                             <NavLink className="nav-link" to="/jurisdictions">
                                 <Inbox className="feather" />
                                 Jurisdictions
                             </NavLink>
                         </li>
+                        <li className="nav-item">
+                            <NavLink className="nav-link" to="/submittals">
+                                <Settings className="feather" />
+                                Submittals
+                            </NavLink>
+                        </li>
+                        {/* <li className="nav-item">
+                            <NavLink className="nav-link" to="/generator">
+                                <Settings className="feather" />
+                                Submittal Generator
+                            </NavLink>
+                        </li> */}
                     </ul>
 
                     <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">

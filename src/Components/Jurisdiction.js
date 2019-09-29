@@ -1,15 +1,11 @@
 import React from 'react';
-import moment from 'moment';
 import { Inbox, Trash2, Edit2, Bookmark } from 'react-feather';
 import { compose, withHandlers, withState } from 'recompose';
-import { Link } from 'react-router-dom';
 import { withFormData, withIsSubmitting, withError, withValidationErrors } from '../HOC/forms';
 import { connect } from 'react-redux';
 import ActionModal from './ActionModal';
-import AddFormModal from './AddFormModal';
 
 let DELETE_MODAL_ID = "deleteModal";
-let ADD_FORM_MODAL_ID = "addFormModal";
 
 const Jurisdiction = ({
     jurisdiction,
@@ -23,13 +19,8 @@ const Jurisdiction = ({
     isSubmitting,
     setFormData,
     formData,
-    note,
-    setNote,
-    addForm,
-    lastNote,
     bookmarks,
-    toggleBookmark,
-    createSubmittal
+    toggleBookmark
 }) => (
         <div className="w-75 bg-light ml-2 position-relative item" style={{ minHeight: "620px" }}>
             <div className="position-fixed w-100 m-2">
@@ -113,22 +104,6 @@ const Jurisdiction = ({
                                 {errors.zip ? <div class="invalid-feedback">{errors.zip}</div> : null}
                             </div>
                         </div>
-                        {!editMode ? (
-                            <form >
-                                <div className="form-group">
-                                    <label>Forms</label>
-                                    <ul className="list-group list-group-flush">
-                                    {
-                                        // jurisdiction.submittals.commercial.forms.map((form, i) => (
-                                        //         <li key={i} className="list-group-item">{form.formId}</li>
-                                        // ))
-                                    }
-                                    </ul>
-                                </div>
-                                <button type="button" data-toggle="modal" data-target={"#" + ADD_FORM_MODAL_ID} className='btn btn-outline-secondary w-100'>Add Form</button> 
-                      
-                            </form>
-                        ) : null}
                         {editMode ? (
                             <div className="form-group">
                                 <button type="submit" className="btn btn-primary mr-2">{isSubmitting ? "Saving..." : "Save Changes"}</button>
@@ -152,11 +127,6 @@ const Jurisdiction = ({
                 title={jurisdiction.name}
                 message="Are you sure you want to delete this jurisdiction?"
                 actionText="Delete" />
-            <AddFormModal
-                modalId={ADD_FORM_MODAL_ID}
-                title={jurisdiction.name}
-                action={(fileId)=> addForm(fileId)}
-                actionText="Add Form" />
         </div>
     )
 
@@ -172,7 +142,6 @@ export default compose(
         })
     ),
     withState('editMode', 'setEditMode', ({ editMode }) => editMode),
-    withState('note', 'setNote', ''),
     withHandlers({
         onSubmit: ({
             formData,
@@ -180,8 +149,6 @@ export default compose(
             setIsSubmitting,
             setEditMode,
             setError,
-            setFormData,
-            setOutput,
             updateJurisdiction,
             jurisdiction
         }) => event => {
@@ -212,42 +179,6 @@ export default compose(
                 setError(null);
             });
 
-        },
-        addForm: ({
-            jurisdiction,
-            updateJurisdiction,
-            note,
-            setNote
-        }) => async fileId => {
-            // the form was just uploaded and its fields have been mapped
-            // now you need to update this Jurisdiction object with a pointer to the form
-
-            // let oldForms = jurisdiction.submittals.commercial.forms;
-
-            // let newForms = oldForms.concat({
-            //     formId: fileId
-            // })
-
-            // let updates = {
-            //     submittals: {
-            //         commercial: {
-            //             forms: newForms
-            //         }
-            //     }
-            // }
-            // await updateJurisdiction(jurisdiction, updates);
-            // console.log('jurisdition updated too!')
-        },
-        lastNote: ({ jurisdiction }) => () => {
-            let lastNote = 'No notes for this jurisdiction';
-            if (!jurisdiction.milestones) return lastNote;
-            jurisdiction.milestones.forEach(milestone => {
-                if (milestone.notes && milestone.notes.length > 0) {
-                    let { timestamp, text } = milestone.notes[milestone.notes.length - 1];
-                    lastNote = `${moment(timestamp).format('MMM D, h:mm a')} - ${text}`;
-                }
-            })
-            return lastNote
         }
     })
 )(Jurisdiction);

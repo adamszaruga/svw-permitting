@@ -159,8 +159,8 @@ const Project = ({
                         <form onSubmit={(e) => {e.preventDefault();e.stopPropagation();}}>
                             <div className="form-group">
                                 <label htmlFor="latest-note">Submittals</label>
-                                {!isLoaded(submittals) ? 'error' : isEmpty(submittals) ? 'No submittals' : submittals.filter(({project: { id }}) => id === project.id).map(({id, createdAt}, index)=>(
-                                    <Link key={index} to={`/submittals/${id}`} className="btn btn-outline-primary w-100">{createdAt.toString()}</Link>
+                                {!isLoaded(submittals) ? 'error' : isEmpty(submittals) ? 'No submittals' : submittals.filter(({entities}) => entities.some(e => e.id === project.id)).map(({id, name}, index)=>(
+                                    <Link key={index} to={`/submittals/${id}`} className="btn btn-outline-primary w-100">{name.toString()}</Link>
                                 ))}
                             </div>
                         </form>
